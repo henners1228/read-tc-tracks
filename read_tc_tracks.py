@@ -48,7 +48,7 @@ model_run = sys.argv[1]
 
 directory = dt.datetime.now().strftime("%Y%m%d{}0000/").format(model_run)
 
-directory = "20191105000000/"
+directory = "20191106000000/"
 
 ftp.cwd(directory)
 
@@ -79,7 +79,7 @@ if len(named_storm_files)==0:
 
 composite_storm_files = [named_storm_files[x:x+2] for x in range(0, len(named_storm_files),2)]
 
-for storm in composite_storm_files:
+for storm in [composite_storm_files[0]]:
     
     ens_path = storm[0]
     
@@ -311,7 +311,7 @@ for storm in composite_storm_files:
     plt.colorbar(s_ens,label="Surface Pressure [hPa]",pad=0.05,orientation="horizontal")
     plt.legend([a[0],b[0],c[0]],["Ensemble","Deterministic","Control"])
     
-    res = 0.5
+    res = 0.25
     
     xx, yy = np.meshgrid(np.arange(x0,x1+res,res),np.arange(y0,y1+res,res))
     
@@ -328,18 +328,24 @@ for storm in composite_storm_files:
             
             for lat,lon in df_ens[["Latitude","Longitude"]].values:
                 
-                if distance.distance((yy[i,j],xx[i,j]),(lat,lon)).km <= 120:
-                    
-                    count += 1
+                try:
                 
+                    if distance.distance((yy[i,j],xx[i,j]),(lat,lon)).nm <= 100:
+                    
+                        count += 1
+                        
+                except ValueError:
+                    
+                    print("nan lat or lon value, skipping")
+            
             prob[i,j] = (count/df_ens[["Latitude","Longitude"]].shape[0]) * 100
+
     
-    plot = plt.contourf(xx,yy,prob,levels=[0,10,20,30,40,50,60,70,80,90,100])
-    plt.colorbar(plot)
+    plot = ax.contourf(xx,yy,prob,levels=[10,20,30,40,50,60,70,80,90,100])
                
-    if not os.path.exists(directory+"plot"):
+    # if not os.path.exists(directory+"plot"):
         
-        os.mkdir(directory+"plot")
+    #     os.mkdir(directory+"plot")
     
-    plt.savefig(directory+"plot"+"/{}.png".format(storm_name),bbox_inches="tight")
-    plt.close()
+    # plt.savefig(directory+"plot"+"/{}.png".format(storm_name),bbox_inches="tight")
+    plt.show()
